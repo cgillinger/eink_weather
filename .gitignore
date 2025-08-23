@@ -1,0 +1,45 @@
+# Bytecode och cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# OS-specifika filer
+.DS_Store
+Thumbs.db
+
+# Loggar och databaser
+*.log
+*.sqlite3
+*.db
+
+# Miljö- och konfigfiler (tokens, API-nycklar m.m.)
+config.json
+.env
+*.env
+
+# Backup- och temporära filer
+*.bak
+*.tmp
+*.swp
+~$*
+
+# JSON-data som inte är kod (cache, historik, mätdata)
+pressure_history.json
+sun_cache.json
+
+# Virtuella miljöer
+.venv/
+env/
+venv/
+
+# Node-modules om projektet får frontend-del senare
+node_modules/
+
+# Kompilerade objekt- och binärfiler
+*.so
+*.dll
+*.exe
+*.o
+*.a
+# Ignore local changes in the e-Paper submodule
+/e-Paper

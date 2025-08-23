@@ -1,0 +1,281 @@
+{
+  "location": {
+    "name": "Stockholm",
+    "latitude": 59.3293,
+    "longitude": 18.0686,
+    "comment": "Ändra koordinaterna för ny plats. Exempel: Yxlan (59.8481, 18.5040)"
+  },
+  "_comment_stockholm_stations": "=== SMHI OBSERVATIONS STATIONER - KORRIGERAD ===",
+  "stockholm_stations": {
+    "observations_station_id": "98230",
+    "observations_station_name": "Stockholm-Observatoriekullen A",
+    "alternative_station_id": "97390",
+    "alternative_station_name": "Stockholm-Arlanda",
+    "comment": "KORRIGERAD: Station 98230 för Observatorielunden fungerar med parameter 7!",
+    "usage_note": "observations_station_id används för 'regnar just nu'-logik från senaste timmen"
+  },
+  "api_keys": {
+    "netatmo": {
+      "client_id": "6777e8548b640a21df054d45",
+      "client_secret": "soPPFwnp0LMJ0tWqP0zV7JStBUcEMLpRP3SMQsKx6",
+      "refresh_token": "5c3dd9b22733bf0c008b8f1c|29bed9d652a614b35738718f5ae859ce",
+      "comment": "UPPDATERADE credentials - September 2025, ny domän api.netatmo.com"
+    }
+  },
+  "layout": {
+    "type": "focus_a",
+    "screen_width": 800,
+    "screen_height": 480,
+    "margin": 40,
+    "module_spacing": 20
+  },
+  "display": {
+    "type": "waveshare_4in26",
+    "rotation": 0,
+    "invert_colors": false,
+    "font_path": "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+    "font_scale": 1.0
+  },
+  "fonts": {
+    "hero_temp": 72,
+    "hero_desc": 32,
+    "medium_main": 48,
+    "medium_desc": 24,
+    "small_main": 32,
+    "small_desc": 18,
+    "tiny": 14
+  },
+  "_comment_dynamic_system": "=== DYNAMIC MODULE SYSTEM (Fas 2) ===",
+  "module_groups": {
+    "bottom_section": {
+      "_comment": "Nederst: Normal = klocka+status, Precipitation = nederbörd",
+      "normal": [
+        "clock_module",
+        "status_module"
+      ],
+      "precipitation_active": [
+        "precipitation_module"
+      ]
+    },
+    "side_panel": {
+      "_comment": "Högerpanel: Normal = barometer, Framtida utbyggnad för sol-modul",
+      "normal": [],
+      "user_preference": [
+        "sun_module"
+      ]
+    },
+    "hero_section": {
+      "_comment": "Huvudmodul: Alltid aktiv, framtida möjlighet för extremväder-layout",
+      "normal": [
+        "main_weather"
+      ],
+      "extreme_weather": [
+        "main_weather"
+      ]
+    },
+    "forecast_section": {
+      "_comment": "Prognos: Alltid aktiv, framtida möjlighet för detaljerad prognos",
+      "normal": [
+        "tomorrow_forecast"
+      ],
+      "detailed": [
+        "tomorrow_forecast"
+      ]
+    },
+    "medium_right_section": {
+      "_comment": "Höger sida: Normal = barometer, Wind = vindmodul",
+      "normal": [
+        "barometer_module"
+      ],
+      "wind_active": [
+        "wind_module"
+      ]
+    }
+  },
+  "triggers": {
+    "precipitation_trigger": {
+      "condition": "precipitation > 0 OR forecast_precipitation_2h >= 0.2",
+      "target_section": "bottom_section",
+      "activate_group": "precipitation_active",
+      "priority": 100,
+      "description": "Aktivera nederbörd-modul vid regn eller kommande regn (2h). NU MED SMHI OBSERVATIONS från Observatorielunden!"
+    },
+    "wind_trigger": {
+      "condition": "wind_speed > 2.0",
+      "target_section": "medium_right_section",
+      "activate_group": "wind_active",
+      "priority": 80,
+      "description": "TEST: Aktivera wind-modul vid vindstyrka över 2 m/s (låg brytpunkt för testning)"
+    }
+  },
+  "_comment_legacy": "=== LEGACY MODULE CONFIG (bakåtkompatibilitet) ===",
+  "modules": {
+    "main_weather": {
+      "enabled": true,
+      "position": "hero",
+      "size": {
+        "width": 480,
+        "height": 300
+      },
+      "coords": {
+        "x": 40,
+        "y": 40
+      },
+      "data_sources": [
+        "netatmo",
+        "smhi",
+        "smhi_observations"
+      ]
+    },
+    "barometer_module": {
+      "enabled": true,
+      "position": "medium_1",
+      "size": {
+        "width": 240,
+        "height": 200
+      },
+      "coords": {
+        "x": 540,
+        "y": 40
+      },
+      "data_sources": [
+        "netatmo"
+      ],
+      "switchable_with": "sun_module"
+    },
+    "wind_module": {
+      "enabled": true,
+      "position": "medium_1",
+      "size": {
+        "width": 240,
+        "height": 200
+      },
+      "coords": {
+        "x": 540,
+        "y": 40
+      },
+      "data_sources": [
+        "smhi"
+      ],
+      "description": "Vindstyrka och vindriktning med svenska benämningar"
+    },
+    "tomorrow_forecast": {
+      "enabled": true,
+      "position": "medium_2",
+      "size": {
+        "width": 240,
+        "height": 200
+      },
+      "coords": {
+        "x": 540,
+        "y": 260
+      },
+      "data_sources": [
+        "smhi"
+      ]
+    },
+    "clock_module": {
+      "enabled": true,
+      "position": "small_1",
+      "size": {
+        "width": 240,
+        "height": 100
+      },
+      "coords": {
+        "x": 40,
+        "y": 360
+      },
+      "data_sources": [
+        "local"
+      ]
+    },
+    "status_module": {
+      "enabled": true,
+      "position": "small_2",
+      "size": {
+        "width": 240,
+        "height": 100
+      },
+      "coords": {
+        "x": 280,
+        "y": 360
+      },
+      "data_sources": [
+        "local"
+      ]
+    },
+    "_comment_new_modules": "=== NYA MODULER (Dynamic Module System) ===",
+    "precipitation_module": {
+      "enabled": true,
+      "position": "dynamic_bottom",
+      "size": {
+        "width": 480,
+        "height": 100
+      },
+      "coords": {
+        "x": 40,
+        "y": 360
+      },
+      "data_sources": [
+        "smhi",
+        "smhi_observations",
+        "cycling_weather"
+      ],
+      "description": "Nederbörd-information med cykel-väder varningar - NU MED OBSERVATIONS från Observatorielunden!"
+    }
+  },
+  "update_intervals": {
+    "netatmo_seconds": 600,
+    "smhi_seconds": 1800,
+    "smhi_observations_seconds": 900,
+    "display_seconds": 300,
+    "clock_seconds": 60,
+    "_comment_observations": "SMHI observations uppdateras varje 15 min (data kommer varje timme från Observatorielunden)"
+  },
+  "user_preferences": {
+    "module_preference": "normal",
+    "_comment": "normal, sun_focus, barometer_focus, cycling_focus"
+  },
+  "_comment_debug_test": "=== SÄKER TEST-DATA SYSTEM ===",
+  "debug": {
+    "enabled": false,
+    "log_level": "INFO",
+    "save_images": false,
+    "test_mode": false,
+    "allow_test_data": false,
+    "test_timeout_hours": 1,
+    "_comment_test_safety": "allow_test_data måste vara true för test-data injection. Sätt till false i produktion!"
+  },
+  "future_expansions": {
+    "seasonal_layouts": "Sommar/vinter moduler (datum-baserade triggers)",
+    "user_overrides": "Manuella modulval via user_preferences",
+    "time_based": "Dag/natt-anpassade layouter",
+    "extreme_weather": "Specialmoduler för extremväder",
+    "example_triggers": {
+      "summer_trigger": {
+        "condition": "time_month >= 6 AND time_month <= 8",
+        "target_section": "side_panel",
+        "activate_group": "summer_focus",
+        "priority": 50,
+        "description": "Sommar-layout med UV-fokus"
+      },
+      "user_preference_trigger": {
+        "condition": "user_preference == sun_focus",
+        "target_section": "side_panel",
+        "activate_group": "user_preference",
+        "priority": 60,
+        "description": "Användarvald sol-modul istället för barometer"
+      }
+    }
+  },
+  "trigger_syntax": {
+    "operators": "> < >= <= == != AND OR",
+    "functions": "precipitation, forecast_precipitation_2h, temperature, wind_speed, time_hour, time_month",
+    "examples": [
+      "precipitation > 0  <- FIXAD: Baserad på SMHI observations från station 98230 (Observatorielunden)",
+      "forecast_precipitation_2h >= 0.2",
+      "wind_speed > 14",
+      "time_month >= 6 AND time_month <= 8"
+    ]
+  }
+}
