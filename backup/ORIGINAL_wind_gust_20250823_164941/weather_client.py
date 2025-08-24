@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Weather Client - API-anrop för SMHI och Netatmo + SunCalculator
 Hämtar riktiga väderdata för E-Paper displayen
@@ -13,7 +12,6 @@ FIXAD: Cykel-väder bug - analyze_cycling_weather extraherar nu korrekt precipit
 FIXAD: Timezone bug - UTC-tider konverteras nu till lokal tid för visning (19:00 UTC → 21:00 CEST)
 NYTT: SMHI-inkonsistens fix - synkroniserar weather description med observations för konsistent regnkläder-info
 FAS 1: VINDRIKTNING API-UTÖKNING - Hämtar nu både vindstyrka (ws) och vindriktning (wd) från SMHI
-NYTT: VINDBY-SUPPORT - Hämtar vindbyar (gust) från SMHI API för "X m/s (Y)" format
 """
 
 import requests
@@ -33,7 +31,7 @@ except ImportError:
     SUN_CALCULATOR_AVAILABLE = False
 
 class WeatherClient:
-    """Klient för att hämta väderdata från SMHI, Netatmo och exakta soltider + CYKEL-VÄDER + SÄKER TEST-DATA + SMHI OBSERVATIONS + VINDRIKTNING + VINDBYAR"""
+    """Klient för att hämta väderdata från SMHI, Netatmo och exakta soltider + CYKEL-VÄDER + SÄKER TEST-DATA + SMHI OBSERVATIONS + VINDRIKTNING"""
     
     def __init__(self, config: Dict[str, Any]):
         """Initialisera med konfiguration"""
@@ -84,7 +82,6 @@ class WeatherClient:
         self.logger.info(f"☀️ SunCalculator aktiverad för exakta soltider")
         self.logger.info(f"🚴‍♂️ Cykel-väder aktiverat (tröskelvärde: {self.CYCLING_PRECIPITATION_THRESHOLD}mm/h)")
         self.logger.info(f"🌬️ FAS 1: Vindriktning API-utökning aktiverad (ws + wd parametrar)")
-        self.logger.info(f"💨 NYTT: Vindby-support aktiverat (gust parameter)")
         
         # NYTT: Logga observations-konfiguration
         station_name = self.stockholm_stations.get('observations_station_name', 'Okänd station')
@@ -661,7 +658,7 @@ class WeatherClient:
             return "Mycket kraftigt regn"
     
     def get_current_weather(self) -> Dict[str, Any]:
-        """Hämta komplett väderdata från alla källor INKLUSIVE Netatmo lokala sensorer + CYKEL-VÄDER + OBSERVATIONS + VINDRIKTNING + VINDBYAR"""
+        """Hämta komplett väderdata från alla källor INKLUSIVE Netatmo lokala sensorer + CYKEL-VÄDER + OBSERVATIONS + VINDRIKTNING"""
         try:
             # Hämta SMHI-data
             smhi_data = self.get_smhi_data()
@@ -716,11 +713,7 @@ class WeatherClient:
             if smhi_data and 'wind_speed' in smhi_data:
                 wind_speed = smhi_data.get('wind_speed', 0.0)
                 wind_direction = smhi_data.get('wind_direction', 'N/A')
-                wind_gust = smhi_data.get('wind_gust', 'N/A')
-                if wind_gust != 'N/A':
-                    self.logger.info(f"💨 VINDBYAR: Hämtad - Medelvind: {wind_speed} m/s, Byar: {wind_gust} m/s, Riktning: {wind_direction}°")
-                else:
-                    self.logger.info(f"🌬️ FAS 1: Vinddata hämtad - Styrka: {wind_speed} m/s, Riktning: {wind_direction}°")
+                self.logger.info(f"🌬️ FAS 1: Vinddata hämtad - Styrka: {wind_speed} m/s, Riktning: {wind_direction}°")
             
             self.logger.info(f"✅ Väderdata hämtad från: {', '.join(sources) if sources else 'fallback'}")
             return combined_data
@@ -950,7 +943,7 @@ class WeatherClient:
             Full SMHI forecast data med timeSeries
         """
         try:
-            self.logger.debug("🌍 Hämtar full SMHI forecast för cykel-analys...")
+            self.logger.debug("🌐 Hämtar full SMHI forecast för cykel-analys...")
             
             # SMHI Meteorologiska prognoser API (samma som get_smhi_data)
             url = f"https://opendata-download-metfcst.smhi.se/api/category/pmp3g/version/2/geotype/point/lon/{self.longitude}/lat/{self.latitude}/data.json"
@@ -966,7 +959,7 @@ class WeatherClient:
             return {}
     
     def get_smhi_data(self) -> Dict[str, Any]:
-        """Hämta väderdata från SMHI API + FAS 1: VINDRIKTNING + VINDBYAR"""
+        """Hämta väderdata från SMHI API + FAS 1: VINDRIKTNING"""
         # Kontrollera cache (30 min)
         if time.time() - self.smhi_cache['timestamp'] < 1800:
             if self.smhi_cache['data']:
@@ -974,7 +967,7 @@ class WeatherClient:
                 return self.smhi_cache['data']
         
         try:
-            self.logger.info("🌍 Hämtar SMHI väderdata med VINDRIKTNING + VINDBYAR...")
+            self.logger.info("🌐 Hämtar SMHI väderdata med VINDRIKTNING...")
             
             # SMHI Meteorologiska prognoser API
             url = f"https://opendata-download-metfcst.smhi.se/api/category/pmp3g/version/2/geotype/point/lon/{self.longitude}/lat/{self.latitude}/data.json"
@@ -1003,13 +996,13 @@ class WeatherClient:
                     tomorrow_forecast = forecast
                     break
             
-            # Extrahera data - NU MED VINDRIKTNING + VINDBYAR!
+            # Extrahera data - NU MED VINDRIKTNING!
             smhi_data = self.parse_smhi_forecast(current_forecast, tomorrow_forecast)
             
             # Uppdatera cache
             self.smhi_cache = {'data': smhi_data, 'timestamp': time.time()}
             
-            self.logger.info("✅ SMHI-data hämtad MED VINDRIKTNING + VINDBYAR")
+            self.logger.info("✅ SMHI-data hämtad MED VINDRIKTNING")
             return smhi_data
             
         except Exception as e:
@@ -1057,7 +1050,7 @@ class WeatherClient:
             return {}
     
     def parse_smhi_forecast(self, current: Dict, tomorrow: Dict) -> Dict[str, Any]:
-        """FAS 1: Parsa SMHI prognos-data - UTÖKAD MED VINDRIKTNING för cykel-väder + nederbörd + VINDBYAR"""
+        """FAS 1: Parsa SMHI prognos-data - UTÖKAD MED VINDRIKTNING för cykel-väder + nederbörd"""
         data = {
             'source': 'smhi',
             'location': self.location_name,
@@ -1076,9 +1069,6 @@ class WeatherClient:
                     data['wind_speed'] = param['values'][0]
                 elif param['name'] == 'wd':  # FAS 1: VINDRIKTNING TILLAGD
                     data['wind_direction'] = float(param['values'][0])
-                elif param['name'] == 'gust':  # NYTT: VINDBYAR TILLAGD
-                    data['wind_gust'] = param['values'][0]
-                    self.logger.info(f"💨 VINDBYAR hämtad från SMHI: {param['values'][0]} m/s")
                 elif param['name'] == 'msl':  # Lufttryck (kommer att överskrivas av Netatmo)
                     data['pressure'] = round(param['values'][0], 0)
                 elif param['name'] == 'pmin':  # NYTT: Nederbörd mm/h
@@ -1100,8 +1090,6 @@ class WeatherClient:
                     tomorrow_data['wind_speed'] = param['values'][0]
                 elif param['name'] == 'wd':
                     tomorrow_data['wind_direction'] = float(param['values'][0])
-                elif param['name'] == 'gust':  # NYTT: VINDBYAR för imorgon
-                    tomorrow_data['wind_gust'] = param['values'][0]
                 # NYTT: Lägg till nederbörd för imorgon också
                 elif param['name'] == 'pmin':
                     tomorrow_data['precipitation'] = param['values'][0]
@@ -1194,24 +1182,24 @@ class WeatherClient:
     def combine_weather_data(self, smhi_data: Dict, netatmo_data: Dict, sun_data: Dict, observations_data: Dict = None) -> Dict[str, Any]:
         """
         INTELLIGENT KOMBINERING: Netatmo lokala mätningar + SMHI prognoser + OBSERVATIONS prioriterat
-        UTÖKAD: Med SMHI Observations prioritering för nederbörd + FAS 1: VINDRIKTNING + VINDBYAR
+        UTÖKAT: Med SMHI Observations prioritering för nederbörd + FAS 1: VINDRIKTNING
         NYTT: SMHI-inkonsistens fix - synkroniserar weather description med observations
         
         Args:
-            smhi_data: SMHI väderdata (prognoser, vind, nederbörd, VINDRIKTNING, VINDBYAR)
+            smhi_data: SMHI väderdata (prognoser, vind, nederbörd, VINDRIKTNING)
             netatmo_data: Netatmo sensordata (temperatur, tryck)
             sun_data: Exakta soltider från SunCalculator
             observations_data: SMHI observations (senaste timmen)
             
         Returns:
-            Optimalt kombinerad väderdata med observations-prioritering och synkroniserad description + VINDRIKTNING + VINDBYAR
+            Optimalt kombinerad väderdata med observations-prioritering och synkroniserad description + VINDRIKTNING
         """
         combined = {
             'timestamp': datetime.now().isoformat(),
             'location': self.location_name
         }
         
-        # PRIORITERING: Netatmo för lokala mätningar, OBSERVATIONS för nederbörd, SMHI för prognoser + VINDRIKTNING + VINDBYAR
+        # PRIORITERING: Netatmo för lokala mätningar, OBSERVATIONS för nederbörd, SMHI för prognoser + VINDRIKTNING
         
         # TEMPERATUR: Netatmo utomhus > SMHI
         if netatmo_data and 'temperature' in netatmo_data:
@@ -1242,7 +1230,7 @@ class WeatherClient:
             combined['observation_station'] = observations_data.get('station_id')
             combined['observation_age_minutes'] = observations_data.get('data_age_minutes', 0)
             
-            self.logger.info(f"🎯 PRIORITERING: Nederbörd från observations ({observations_data['precipitation_observed']}mm/h) istället för prognoser")
+            self.logger.info(f"🎯 PRIORITERING: Nederbörd från observations ({observations_data['precipitation_observed']}mm/h) iställetför prognoser")
             
         elif smhi_data and 'precipitation' in smhi_data:
             # Fallback till SMHI prognoser
@@ -1250,22 +1238,14 @@ class WeatherClient:
             combined['precipitation_source'] = 'smhi_forecast'
             self.logger.debug("🔄 Fallback: Nederbörd från SMHI prognoser (observations ej tillgänglig)")
         
-        # FAS 1: VINDDATA från SMHI (nu både styrka, riktning och VINDBYAR!)
+        # FAS 1: VINDDATA från SMHI (nu både styrka och riktning!)
         if smhi_data:
             combined['wind_speed'] = smhi_data.get('wind_speed', 0.0)
             combined['wind_direction'] = smhi_data.get('wind_direction', 0.0)  # FAS 1: TILLAGT
             
-            # NYTT: VINDBYAR om tillgänglig
-            if 'wind_gust' in smhi_data:
-                combined['wind_gust'] = smhi_data['wind_gust']
-                self.logger.debug(f"💨 VINDBYAR: {smhi_data['wind_gust']} m/s kombinerad med vinddata")
-            
             # Logga vinddata för debugging
             if 'wind_speed' in smhi_data and 'wind_direction' in smhi_data:
-                if 'wind_gust' in smhi_data:
-                    self.logger.debug(f"💨 KOMPLETT vinddata - Medel: {smhi_data['wind_speed']} m/s, Byar: {smhi_data['wind_gust']} m/s, Riktning: {smhi_data['wind_direction']}°")
-                else:
-                    self.logger.debug(f"🌬️ FAS 1: Komplett vinddata - {smhi_data['wind_speed']} m/s från {smhi_data['wind_direction']}°")
+                self.logger.debug(f"🌬️ FAS 1: Komplett vinddata - {smhi_data['wind_speed']} m/s från {smhi_data['wind_direction']}°")
         
         # LUFTFUKTIGHET: Netatmo (bonus-data)
         if netatmo_data:
@@ -1337,7 +1317,7 @@ class WeatherClient:
             combined['pressure_trend_arrow'] = 'stable'  # Horisontell pil under uppbyggnad
             self.logger.info(f"🎯 Otillräcklig data: {pressure_trend['trend']} → 'Samlar data'")
         
-        # DATAKÄLLA-SAMMANFATTNING + FAS 1: VINDRIKTNING + VINDBYAR
+        # DATAKÄLLA-SAMMANFATTNING + FAS 1: VINDRIKTNING
         sources = []
         if observations_data:
             sources.append("Observations")
@@ -1350,8 +1330,6 @@ class WeatherClient:
             sources.append("SMHI-prognos")
             if 'wind_direction' in smhi_data:
                 sources.append("SMHI-vindriktning")  # FAS 1: Tillagt
-            if 'wind_gust' in smhi_data:
-                sources.append("SMHI-vindbyar")  # NYTT: Tillagt
         
         combined['data_sources'] = sources
         
@@ -1363,7 +1341,7 @@ class WeatherClient:
         return combined
     
     def get_fallback_data(self) -> Dict[str, Any]:
-        """Fallback-data vid API-fel - UTÖKAD MED CYKEL-VÄDER fallback + OBSERVATIONS + FAS 1: VINDRIKTNING + VINDBYAR"""
+        """Fallback-data vid API-fel - UTÖKAD MED CYKEL-VÄDER fallback + OBSERVATIONS + FAS 1: VINDRIKTNING"""
         return {
             'timestamp': datetime.now().isoformat(),
             'location': self.location_name,
@@ -1378,16 +1356,14 @@ class WeatherClient:
             'precipitation_source': 'fallback',
             'precipitation_observed': 0.0,  # NYTT: Observations fallback
             'forecast_precipitation_2h': 0.0,  # FIXAD: Lägg till för trigger
-            # FAS 1: VINDRIKTNING fallback + VINDBYAR
+            # FAS 1: VINDRIKTNING fallback
             'wind_speed': 0.0,
             'wind_direction': 0.0,
-            'wind_gust': 0.0,  # NYTT: Vindby fallback
             'tomorrow': {
                 'temperature': 18.0,
                 'weather_description': 'Okänt',
                 'wind_speed': 0.0,        # FAS 1: Fallback vinddata
-                'wind_direction': 0.0,    # FAS 1: Fallback vindriktning
-                'wind_gust': 0.0          # NYTT: Fallback vindbyar
+                'wind_direction': 0.0     # FAS 1: Fallback vindriktning
             },
             # Fallback soltider
             'sun_data': {
@@ -1409,12 +1385,12 @@ class WeatherClient:
 
 def test_weather_client():
     """
-    FAS 1: UPPDATERAD Test-funktion med VINDRIKTNING-verifiering + VINDBYAR
+    FAS 1: UPPDATERAD Test-funktion med VINDRIKTNING-verifiering
     
-    Testar säkra test-data injection system och korrekt SMHI Observations integration + VINDRIKTNING + VINDBYAR
+    Testar säkra test-data injection system och korrekt SMHI Observations integration + VINDRIKTNING
     """
-    print("💨 Test av WeatherClient MED VINDRIKTNING + VINDBYAR + SMHI OBSERVATIONS + CYKEL-VÄDER + TEST-DATA")
-    print("=" * 90)
+    print("🧪 FAS 1: Test av WeatherClient MED VINDRIKTNING + SMHI OBSERVATIONS + CYKEL-VÄDER + TEST-DATA")
+    print("=" * 80)
     
     try:
         # FIXAD: Läs från samma config.json som produktionssystemet
@@ -1435,19 +1411,19 @@ def test_weather_client():
         
         # Visa konfiguration som kommer användas
         stockholm_stations = config.get('stockholm_stations', {})
-        print(f"📁 KONFIGURATION (från {config_path}):")
+        print(f"📍 KONFIGURATION (från {config_path}):")
         print(f"   Station ID: {stockholm_stations.get('observations_station_id', 'Saknas')}")
         print(f"   Station namn: {stockholm_stations.get('observations_station_name', 'Saknas')}")
         print(f"   Debug aktiverat: {config.get('debug', {}).get('enabled', False)}")
         print(f"   Test-data tillåtet: {config.get('debug', {}).get('allow_test_data', False)}")
         
-        print(f"\n🌬️ VINDRIKTNING + 💨 VINDBYAR API-UTÖKNING TEST:")
-        print(f"   🎯 Målparametrar: 'wd' (wind direction) + 'gust' (wind gusts) från SMHI")
+        print(f"\n🌬️ FAS 1: VINDRIKTNING API-UTÖKNING TEST:")
+        print(f"   🎯 Målparameter: 'wd' (wind direction) från SMHI")
         print(f"   📊 Befintlig parameter: 'ws' (wind speed) ska fungera som vanligt")
-        print(f"   🔄 Styrka, riktning OCH vindbyar ska finnas i weather_data")
+        print(f"   🔄 Både styrka och riktning ska finnas i weather_data")
         
-        print(f"\n🚀 KÖR WEATHERCLIENT-TEST MED VINDBYAR:")
-        print("-" * 60)
+        print(f"\n🚀 KÖR WEATHERCLIENT-TEST MED VINDRIKTNING:")
+        print("-" * 50)
         
         # Setup logging för test
         logging.basicConfig(level=logging.INFO)
@@ -1456,35 +1432,26 @@ def test_weather_client():
         client = WeatherClient(config)
         weather_data = client.get_current_weather()
         
-        print(f"\n📊 VINDRIKTNING + VINDBYAR TEST-RESULTAT:")
-        print("-" * 50)
+        print(f"\n📊 FAS 1: VINDRIKTNING TEST-RESULTAT:")
+        print("-" * 40)
         
-        # Specifika tester för vinddata
+        # FAS 1: Specifika tester för vinddata
         wind_speed = weather_data.get('wind_speed', 'SAKNAS')
         wind_direction = weather_data.get('wind_direction', 'SAKNAS')
-        wind_gust = weather_data.get('wind_gust', 'SAKNAS')
         
-        print(f"🌬️ VINDDATA VERIFIERING:")
+        print(f"🌬️ FAS 1: VINDDATA VERIFIERING:")
         print(f"   📊 Vindstyrka (ws): {wind_speed} m/s")
         print(f"   🧭 Vindriktning (wd): {wind_direction}° {'✅ FUNKAR' if wind_direction != 'SAKNAS' else '❌ SAKNAS'}")
-        print(f"   💨 Vindbyar (gust): {wind_gust} m/s {'✅ FUNKAR' if wind_gust != 'SAKNAS' else '❌ SAKNAS'}")
         
-        if wind_direction != 'SAKNAS' and wind_gust != 'SAKNAS':
-            print(f"   🎯 FULLSTÄNDIG FRAMGÅNG: Alla tre vindparametrar hämtade från SMHI!")
-            # Beräkna gust/wind ratio för validering
-            if wind_speed > 0 and wind_gust != 'SAKNAS':
-                ratio = float(wind_gust) / float(wind_speed)
-                print(f"   📈 Gust/Wind ratio: {ratio:.2f} ({'Normal' if 1.0 <= ratio <= 3.0 else 'Ovanlig'})")
-        elif wind_direction != 'SAKNAS':
-            print(f"   ⚠️ DELVIS: Vindriktning OK men vindbyar saknas")
+        if wind_direction != 'SAKNAS':
+            print(f"   🎯 FAS 1 FRAMGÅNG: Båda vindparametrar hämtade från SMHI!")
         else:
-            print(f"   ❌ PROBLEM: Vindriktning saknas - kontrollera parse_smhi_forecast()")
+            print(f"   ⚠️ FAS 1 PROBLEM: Vindriktning saknas - kontrollera parse_smhi_forecast()")
         
         # Visa även morgondagens vinddata om tillgängligt
         tomorrow = weather_data.get('tomorrow', {})
         if tomorrow.get('wind_speed') is not None and tomorrow.get('wind_direction') is not None:
-            tomorrow_gust = tomorrow.get('wind_gust', 'N/A')
-            print(f"   📅 Imorgon: {tomorrow['wind_speed']} m/s från {tomorrow['wind_direction']}° (byar: {tomorrow_gust})")
+            print(f"   📅 Imorgon vind: {tomorrow['wind_speed']} m/s från {tomorrow['wind_direction']}°")
         
         # Specificera tester för SMHI Observations (befintlig från före Fas 1)
         observations_tested = 'precipitation_observed' in weather_data
@@ -1536,22 +1503,16 @@ def test_weather_client():
         sources = weather_data.get('data_sources', [])
         print(f"\n📡 DATAKÄLLOR: {', '.join(sources) if sources else 'Ingen data'}")
         
-        print(f"\n✅ KOMPLETT TEST SLUTFÖRT - WeatherClient med VINDRIKTNING + VINDBYAR!")
+        print(f"\n✅ FAS 1 TEST KOMPLETT - WeatherClient med VINDRIKTNING!")
         
-        # Sammanfattning baserat på resultat
-        if wind_direction != 'SAKNAS' and wind_gust != 'SAKNAS':
-            print(f"🎯 FULLSTÄNDIG FRAMGÅNG: API-utökning för vindriktning + vindbyar KLAR")
-            print(f"🌬️ Alla tre vindparametrar hämtade från SMHI:")
-            print(f"   - Vindstyrka: {wind_speed} m/s")
-            print(f"   - Vindriktning: {wind_direction}°")
-            print(f"   - Vindbyar: {wind_gust} m/s")
-            print(f"🔧 parse_smhi_forecast() nu utökad med både 'wd' och 'gust' parametrar")
-            print(f"📊 Data redo för WindRenderer att visa 'X m/s (Y)' format")
-        elif wind_direction != 'SAKNAS':
-            print(f"🎯 DELVIS FRAMGÅNG: Vindriktning OK, vindbyar saknas")
-            print(f"🔧 Kontrollera att 'gust' parameter finns i SMHI API-svaret")
+        # FAS 1: Sammanfattning
+        if wind_direction != 'SAKNAS':
+            print(f"🎯 FAS 1 FRAMGÅNG: API-utökning för vindriktning KLAR")
+            print(f"🌬️ Både vindstyrka ({wind_speed} m/s) och vindriktning ({wind_direction}°) hämtas från SMHI")
+            print(f"🔧 parse_smhi_forecast() nu utökad med 'wd' parameter-parsning")
+            print(f"📊 Data tillgänglig för nästa fas (mappning till svenska riktningar)")
         else:
-            print(f"❌ PROBLEM: Vindriktning saknas")
+            print(f"❌ FAS 1 PROBLEM: Vindriktning hämtas inte korrekt")
             print(f"🔧 Kontrollera att 'wd' parameter läggs till i parse_smhi_forecast()")
         
         return True
