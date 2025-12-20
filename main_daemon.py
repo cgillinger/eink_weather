@@ -917,10 +917,10 @@ class EPaperWeatherDaemon:
             # Solnedgång - ikon + exakt tid
             sunset_icon = self.icon_manager.get_sun_icon('sunset', size=(56, 56))
             if sunset_icon:
-                self.paste_icon_on_canvas(sunset_icon, x + 180, y + 200)
-                self.draw.text((x + 240, y + 215), sunset_str, font=self.fonts['medium_desc'], fill=0)
+                self.paste_icon_on_canvas(sunset_icon, x + 160, y + 200)
+                self.draw.text((x + 220, y + 215), sunset_str, font=self.fonts['medium_desc'], fill=0)
             else:
-                self.draw.text((x + 180, y + 215), f"🌇 {sunset_str}", font=self.fonts['medium_desc'], fill=0)
+                self.draw.text((x + 160, y + 215), f"🌇 {sunset_str}", font=self.fonts['medium_desc'], fill=0)
 
         # Visa soldata-källa (diskret)
         sun_source = sun_data.get('source', 'unknown')
@@ -931,6 +931,18 @@ class EPaperWeatherDaemon:
             elif sun_source == 'fallback':
                 source_text = "Sol: approx"
             self.draw.text((x + 20, y + 250), source_text, font=self.fonts['tiny'], fill=0)
+
+        # NYTT: UV-INDEX - till höger om soltider
+        uv_index = weather_data.get('uv_index')
+        if uv_index is not None:
+            # UV-ikon (40×40 - samma storlek som kalenderikon)
+            uv_icon = self.icon_manager.get_system_icon('uv', size=(40, 40))
+            if uv_icon:
+                self.paste_icon_on_canvas(uv_icon, x + 300, y + 205)
+            
+            # UV-värde
+            uv_text = f"UV {uv_index:.1f}"
+            self.draw.text((x + 350, y + 215), uv_text, font=self.fonts['medium_desc'], fill=0)
 
     def legacy_render_barometer(self, x, y, width, height, weather_data, trigger_context):
         """BEFINTLIG: Barometer-modul rendering (oförändrad från original)"""

@@ -84,6 +84,9 @@ class WeatherClient:
         # NYTT: Cache för SMHI observations (15 min - data kommer varje timme)
         self.observations_cache = {'data': None, 'timestamp': 0}
 
+        # NYTT: Cache för UV-index (6 timmar - långsam förändring)
+        self.uv_cache = {'data': None, 'timestamp': 0}
+
         # NYTT: Tryckhistorik för 3-timmars tendenser (meteorologisk standard)
         self.pressure_history_file = "cache/pressure_history.json"
         self.ensure_cache_directory()
@@ -115,6 +118,10 @@ class WeatherClient:
             self.logger.info(f"🏠 Netatmo-integration aktiverad (temp, tryck, RAIN GAUGE)")
         else:
             self.logger.warning(f"⚠️ Netatmo-credentials saknas - använder endast SMHI")
+
+        # NYTT: UV-index API (CurrentUVIndex.com - gratis, ingen API-nyckel krävs)
+        self.uv_api_url = "https://currentuvindex.com/api/v1/uvi"
+        self.logger.info(f"☀️ UV-index aktiverat från CurrentUVIndex.com (6h cache)")
 
         # NYTT: Kontrollera test-data konfiguration
         debug_config = self.config.get('debug', {})
@@ -693,6 +700,9 @@ class WeatherClient:
             # Hämta exakta soltider
             sun_data = self.get_sun_data()
 
+            # NYTT: Hämta UV-index
+            uv_data = self.get_uv_data()
+
             # NYTT: Hämta SMHI observations för "regnar just nu" (fallback)
             observations_data = self.get_smhi_observations()
 
@@ -703,7 +713,7 @@ class WeatherClient:
             cycling_weather = self.analyze_cycling_weather(smhi_forecast_data)
 
             # Kombinera data intelligent (NETATMO RAIN GAUGE prioriterat högst, sedan Netatmo temp/tryck, sedan Observations, sedan SMHI prognoser)
-            combined_data = self.combine_weather_data(smhi_data, netatmo_data, sun_data, observations_data)
+            combined_data = self.combine_weather_data(smhi_data, netatmo_data, sun_data, observations_data, uv_data)
 
             # NYTT: Lägg till cykel-väder information
             combined_data['cycling_weather'] = cycling_weather
@@ -1014,6 +1024,101 @@ class WeatherClient:
             self.logger.error(f"❌ Fel vid parsning av Netatmo-data: {e}")
             return {}
 
+    def get_uv_data(self) -> Dict[str, Any]:
+        """
+        NYTT: Hämta UV-index från CurrentUVIndex.com API
+        
+        Returns:
+            Dict med UV-data eller tom dict vid fel
+        """
+        # Kontrollera cache (6 timmar)
+        if time.time() - self.uv_cache['timestamp'] < 21600:  # 6h = 21600s
+            if self.uv_cache['data']:
+                self.logger.info("☀️ Använder cachad UV-data")
+                return self.uv_cache['data']
+
+        try:
+            self.logger.info("☀️ Hämtar UV-index från CurrentUVIndex.com...")
+
+            # API-anrop med koordinater från config
+            url = f"{self.uv_api_url}?latitude={self.latitude}&longitude={self.longitude}"
+            
+            response = requests.get(url, timeout=10)
+            response.raise_for_status()
+
+            data = response.json()
+
+            # Nuvarande UV
+            current_uv = data.get('now', {}).get('uvi', 0)
+
+            # Max UV från prognos (dagens peak)
+            max_uv = current_uv
+            peak_hour = datetime.now().hour
+
+            if 'forecast' in data and isinstance(data['forecast'], list):
+                for forecast in data['forecast']:
+                    forecast_uv = forecast.get('uvi', 0)
+                    if forecast_uv > max_uv:
+                        max_uv = forecast_uv
+                        try:
+                            forecast_time = datetime.fromisoformat(forecast['hour'].replace('Z', '+00:00'))
+                            peak_hour = forecast_time.hour
+                        except:
+                            pass
+
+            # Klassificera risknivå (svensk standard)
+            risk_level, risk_text = self._classify_uv_risk(max_uv)
+
+            uv_data = {
+                'uv_index': round(max_uv, 1),
+                'current_uv': round(current_uv, 1),
+                'peak_hour': peak_hour,
+                'risk_level': risk_level,
+                'risk_text': risk_text,
+                'timestamp': datetime.now().isoformat(),
+                'source': 'CurrentUVIndex.com'
+            }
+
+            # Uppdatera cache
+            self.uv_cache = {'data': uv_data, 'timestamp': time.time()}
+
+            self.logger.info(f"☀️ UV-index: {uv_data['uv_index']} ({risk_text})")
+            return uv_data
+
+        except requests.exceptions.RequestException as e:
+            self.logger.error(f"❌ UV API-fel: {e}")
+            
+            # Fallback till gammal cache om tillgänglig
+            if self.uv_cache['data']:
+                self.logger.info("☀️ Använder gammal UV-cache som fallback")
+                return self.uv_cache['data']
+                
+            return {}
+        except Exception as e:
+            self.logger.error(f"❌ UV parsningsfel: {e}")
+            return {}
+
+    def _classify_uv_risk(self, uv_index: float) -> tuple:
+        """
+        Klassificera UV-risk enligt Strålsäkerhetsmyndigheten
+        
+        Args:
+            uv_index: UV-indexvärde
+            
+        Returns:
+            Tuple (risk_level, risk_text)
+        """
+        if uv_index <= 2:
+            return ('low', 'Låg')
+        elif uv_index <= 5:
+            return ('moderate', 'Måttlig')
+        elif uv_index <= 7:
+            return ('high', 'Hög')
+        elif uv_index <= 10:
+            return ('very_high', 'Mycket hög')
+        else:
+            return ('extreme', 'Extrem')
+
     def get_smhi_forecast_data(self) -> Dict[str, Any]:
         """
         NYTT: Hämta full SMHI forecast data för cykel-analys
@@ -1261,11 +1366,11 @@ class WeatherClient:
             self.logger.error(f"❌ Fel vid weather description synkronisering: {e}")
             return self.get_weather_description(weather_symbol)  # Fallback till original
 
-    def combine_weather_data(self, smhi_data: Dict, netatmo_data: Dict, sun_data: Dict, observations_data: Dict = None) -> Dict[str, Any]:
+    def combine_weather_data(self, smhi_data: Dict, netatmo_data: Dict, sun_data: Dict, observations_data: Dict = None, uv_data: Dict = None) -> Dict[str, Any]:
         """
-        INTELLIGENT KOMBINERING: Netatmo lokala mätningar + SMHI prognoser + OBSERVATIONS prioriterat
+        INTELLIGENT KOMBINERING: Netatmo lokala mätningar + SMHI prognoser + OBSERVATIONS prioriterat + UV-INDEX
         NYTT: NETATMO RAIN GAUGE HÖGSTA PRIORITET för nederbörd (5 min fördröjning)
-        UTÖKAD: Med SMHI Observations prioritering för nederbörd + FAS 1: VINDRIKTNING + VINDBYAR
+        UTÖKAD: Med SMHI Observations prioritering för nederbörd + FAS 1: VINDRIKTNING + VINDBYAR + UV-INDEX
         NYTT: SMHI-inkonsistens fix - synkroniserar weather description med observations
 
         NEDERBÖRDS-PRIORITERING (NY):
@@ -1280,9 +1385,10 @@ class WeatherClient:
             netatmo_data: Netatmo sensordata (temperatur, tryck, RAIN GAUGE)
             sun_data: Exakta soltider från SunCalculator
             observations_data: SMHI observations (senaste timmen)
+            uv_data: UV-index från CurrentUVIndex.com
 
         Returns:
-            Optimalt kombinerad väderdata med Netatmo Rain Gauge-prioritering + observations + synkroniserad description + VINDRIKTNING + VINDBYAR
+            Optimalt kombinerad väderdata med Netatmo Rain Gauge-prioritering + observations + synkroniserad description + VINDRIKTNING + VINDBYAR + UV-INDEX
         """
         combined = {
             'timestamp': datetime.now().isoformat(),
@@ -1484,6 +1590,16 @@ class WeatherClient:
                 sources.append("SMHI-vindbyar")  # NYTT: Tillagt
 
         combined['data_sources'] = sources
+
+        # UV-INDEX: Lägg till om tillgänglig
+        if uv_data:
+            combined['uv_index'] = uv_data.get('uv_index', 0)
+            combined['uv_current'] = uv_data.get('current_uv', 0)
+            combined['uv_risk_level'] = uv_data.get('risk_level', 'low')
+            combined['uv_risk_text'] = uv_data.get('risk_text', 'Låg')
+            combined['uv_peak_hour'] = uv_data.get('peak_hour', 12)
+            combined['uv_source'] = uv_data.get('source', 'CurrentUVIndex.com')
+            sources.append("UV-index")
 
         # === SÄKER TEST-DATA OVERRIDE ===
         test_override = self._load_test_data_if_enabled()
