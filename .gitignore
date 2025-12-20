@@ -1,36 +1,78 @@
-# Bytecode och cache
+################################
+# Python
+################################
+
+# Bytecode / cache
 __pycache__/
 *.py[cod]
 *$py.class
 
-# OS-specifika filer
-.DS_Store
-Thumbs.db
+# Virtual environments
+venv/
+.venv/
+env/
+.env/
+ENV/
 
-# Loggar och databaser
-*.log
+# Python build artifacts
+build/
+dist/
+*.egg-info/
+
+################################
+# Cache & runtime data
+################################
+
+cache/
+modules/cache/
+*.json
+
+################################
+# Databaser & lokala data
+################################
+
 *.sqlite3
 *.db
 
-# Miljö- och konfigfiler (tokens, API-nycklar m.m.)
-config.json
-...
-env/
-venv/
+################################
+# Loggar
+################################
 
-# Node-modules om projektet får frontend-del senare
+*.log
+
+################################
+# Konfig / hemligheter
+################################
+
+config.json
+.env.local
+
+################################
+# Backup
+################################
+
+backup/
+backup*/
+*backup*
+
+################################
+# OS / editor
+################################
+
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+################################
+# Node (om frontend tillkommer)
+################################
+
 node_modules/
 
-# Kompilerade objekt- och binärfiler
-*.so
-*.dll
-*.exe
-*.o
-*.a
+################################
+# Projekt-specifikt
+################################
 
-# Ignore local changes in the e-Paper submodule
 /e-Paper
-
-# Backup-mappar (överallt i projektet)
-backup/
 
