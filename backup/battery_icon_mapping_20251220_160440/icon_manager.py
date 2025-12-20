@@ -103,7 +103,6 @@ class WeatherIconManager:
             'clock7': 'wi-time-7',            # Klockikon (FÖRBÄTTRAD)
             'barometer': 'wi-barometer',      # FIXED: Barometer-ikon tillagd!
             'calendar': 'wi-calendar',        # NYTT: Kalender-ikon för datummodulen!
-            'battery': 'wi-battery',          # NYTT: Batteri-ikon för status-modulen!
             'strong-wind': 'wi-strong-wind'   # NYTT: Generell wind-ikon för wind-modulen!
         }
         
@@ -183,7 +182,7 @@ class WeatherIconManager:
         Hämta system-ikon
         
         Args:
-            system_type: 'update', 'data_source', 'status_ok', 'status_error', 'barometer', 'clock', 'clock3', 'calendar', 'battery', 'strong-wind'
+            system_type: 'update', 'data_source', 'status_ok', 'status_error', 'barometer', 'clock', 'clock3', 'calendar', 'strong-wind'
             size: Tuple med ikon-storlek
             
         Returns:
@@ -196,8 +195,6 @@ class WeatherIconManager:
             self.logger.info(f"📅 Kalender-ikon begärd: {icon_name} ({size[0]}x{size[1]})")
         elif system_type == 'barometer':
             self.logger.info(f"📊 Barometer-ikon begärd: {icon_name} ({size[0]}x{size[1]})")
-        elif system_type == 'battery':
-            self.logger.info(f"🔋 Batteri-ikon begärd: {icon_name} ({size[0]}x{size[1]})")
         elif system_type == 'strong-wind':
             self.logger.info(f"🌬️ Generell wind-ikon begärd: {icon_name} ({size[0]}x{size[1]})")
         
