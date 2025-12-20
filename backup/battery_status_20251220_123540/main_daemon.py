@@ -1029,43 +1029,35 @@ class EPaperWeatherDaemon:
         self.draw.text((text_start_x, y + 50), weekday_truncated, font=self.fonts['medium_desc'], fill=0)
 
     def legacy_render_status(self, x, y, width, height, weather_data, trigger_context):
-        """MODIFIERAD: Status-modul med Netatmo batteristatus och batteriikon"""
+        """MODIFIERAD: Status-modul med Rendering Pipeline info"""
         update_time = datetime.now().strftime('%H:%M')
 
         # Status med enkla prickar
         dot_x = x + 10
         dot_size = 3
-        
-        # Hämta Netatmo batteristatus
-        netatmo_extras = weather_data.get('netatmo_extras', {})
-        outdoor_battery = netatmo_extras.get('outdoor_battery')
-        rain_battery = netatmo_extras.get('rain_battery')
-        
-        # Ladda batteriikon (24×24)
-        battery_icon = self.icon_manager.get_system_icon('battery', size=(24, 24))
-        
-        # RAD 1: Update tid (visas alltid)
+
+        # Status prick + text
         self.draw.ellipse([
             (dot_x, y + 28),
             (dot_x + dot_size, y + 28 + dot_size)
         ], fill=0)
-        self.draw.text((dot_x + 10, y + 20), f"Update: {update_time}", font=self.fonts['small_desc'], fill=0)
+        self.draw.text((dot_x + 10, y + 20), "Pipeline: ✓", font=self.fonts['small_desc'], fill=0)
 
-        # RAD 2: Utomhusmodul batteri (om tillgänglig)
-        if outdoor_battery is not None:
-            # Batteriikon istället för prick
-            if battery_icon:
-                self.paste_icon_on_canvas(battery_icon, dot_x, y + 43)
-            # Text med kort formatering
-            self.draw.text((dot_x + 30, y + 45), f"{outdoor_battery}% Utomhus", font=self.fonts['small_desc'], fill=0)
-        
-        # RAD 3: Regnmodul batteri (om tillgänglig)
-        if rain_battery is not None:
-            # Batteriikon istället för prick
-            if battery_icon:
-                self.paste_icon_on_canvas(battery_icon, dot_x, y + 68)
-            # Text med kort formatering
-            self.draw.text((dot_x + 30, y + 70), f"{rain_battery}% Regnmodul", font=self.fonts['small_desc'], fill=0)
+        # Update prick + text
+        self.draw.ellipse([
+            (dot_x, y + 53),
+            (dot_x + dot_size, y + 53 + dot_size)
+        ], fill=0)
+        self.draw.text((dot_x + 10, y + 45), f"Update: {update_time}", font=self.fonts['small_desc'], fill=0)
+
+        # NYT: Visa rendering info
+        active_modules = self.module_manager.get_active_modules(trigger_context)
+        modules_text = f"{len(active_modules)} moduler"
+        self.draw.ellipse([
+            (dot_x, y + 78),
+            (dot_x + dot_size, y + 78 + dot_size)
+        ], fill=0)
+        self.draw.text((dot_x + 10, y + 70), f"Rendered: {modules_text}", font=self.fonts['small_desc'], fill=0)
 
     # === NYA HJÄLPMETODER ===
 

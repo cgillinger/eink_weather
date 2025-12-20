@@ -948,12 +948,6 @@ class WeatherClient:
                             else:
                                 self.logger.debug(f"✅ Netatmo-data är {data_age_minutes:.1f} min gammal")
 
-                        # Batteriinformation utomhusmodul
-                        if 'battery_percent' in module:
-                            netatmo_data['outdoor_battery'] = module['battery_percent']
-                            if module['battery_percent'] < 20:
-                                self.logger.warning(f"⚠️ Netatmo utomhusmodul batteri lågt: {module['battery_percent']}%")
-
                     # NYTT: NAModule3 = Rain Gauge (regnmätare) - HÖGSTA PRIORITET FÖR NEDERBÖRD!
                     elif module_type == 'NAModule3' and 'dashboard_data' in module:
                         rain_data = module['dashboard_data']
@@ -1429,7 +1423,7 @@ class WeatherClient:
         # BONUS NETATMO-DATA (för framtida användning)
         if netatmo_data:
             combined['netatmo_extras'] = {}
-            for key in ['co2', 'noise', 'indoor_temperature', 'station_name', 'last_measurement', 'outdoor_battery', 'rain_battery']:
+            for key in ['co2', 'noise', 'indoor_temperature', 'station_name', 'last_measurement', 'rain_battery']:
                 if key in netatmo_data:
                     combined['netatmo_extras'][key] = netatmo_data[key]
 

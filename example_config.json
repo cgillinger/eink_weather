@@ -1,0 +1,391 @@
+{
+  "location": {
+    "name": "Stockholm",
+    "latitude": 59.3293,
+    "longitude": 18.0686,
+    "comment": "Ändra koordinaterna för ny plats. Exempel: Yxlan (59.8481, 18.5040)"
+  },
+  "_comment_stockholm_stations": "=== SMHI OBSERVATIONS STATIONER - KORRIGERAD ===",
+  "stockholm_stations": {
+    "observations_station_id": "98230",
+    "observations_station_name": "Stockholm-Observatoriekullen A",
+    "alternative_station_id": "97390",
+    "alternative_station_name": "Stockholm-Arlanda",
+    "comment": "KORRIGERAD: Station 98230 för Observatorielunden fungerar med parameter 7!",
+    "usage_note": "observations_station_id används för 'regnar just nu'-logik från senaste timmen"
+  },
+  "api_keys": {
+    "netatmo": {
+      "client_id": "YOUR_NETATMO_CLIENT_ID_HERE",
+      "client_secret": "YOUR_NETATMO_CLIENT_SECRET_HERE",
+      "refresh_token": "YOUR_NETATMO_REFRESH_TOKEN_HERE",
+      "comment": "PLACEHOLDER - Ersätt med dina Netatmo credentials från https://dev.netatmo.com"
+    }
+  },
+  "layout": {
+    "type": "focus_a",
+    "screen_width": 800,
+    "screen_height": 480,
+    "margin": 40,
+    "module_spacing": 20
+  },
+  "_comment_dynamic_system": "=== DYNAMIC MODULE SYSTEM (Fas 2) ===",
+  "module_groups": {
+    "bottom_section": {
+      "_comment": "Nederst: Normal = klocka+status, Precipitation = nederbörd",
+      "normal": [
+        "clock_module",
+        "status_module"
+      ],
+      "precipitation_active": [
+        "precipitation_module"
+      ]
+    },
+    "side_panel": {
+      "_comment": "Högerpanel: Normal = barometer, Framtida utbyggnad för sol-modul",
+      "normal": [],
+      "user_preference": [
+        "sun_module"
+      ]
+    },
+    "hero_section": {
+      "_comment": "Huvudmodul: Alltid aktiv, framtida möjlighet för extremväder-layout",
+      "normal": [
+        "main_weather"
+      ],
+      "extreme_weather": [
+        "main_weather"
+      ]
+    },
+    "forecast_section": {
+      "_comment": "Prognos: Alltid aktiv, framtida möjlighet för detaljerad prognos",
+      "normal": [
+        "tomorrow_forecast"
+      ],
+      "detailed": [
+        "tomorrow_forecast"
+      ]
+    },
+    "medium_right_section": {
+      "_comment": "Höger sida: Normal = barometer, Wind = vindmodul",
+      "normal": [
+        "barometer_module"
+      ],
+      "wind_active": [
+        "wind_module"
+      ]
+    }
+  },
+  "triggers": {
+    "precipitation_trigger": {
+      "condition": "(precipitation > 0 OR forecast_precipitation_2h >= 0.2) AND (precipitation_source == 'netatmo_rain_gauge' OR pcat == 3 OR pcat == 5)",
+      "target_section": "bottom_section",
+      "activate_group": "precipitation_active",
+      "priority": 100,
+      "description": "Aktivera nederbörd-modul vid regn eller kommande regn (2h). Netatmo Rain Gauge alltid OK, SMHI endast regn (pcat=3) eller hagel+regn (pcat=5)"
+    },
+    "wind_trigger": {
+      "condition": "wind_speed > 6.0",
+      "target_section": "medium_right_section",
+      "activate_group": "wind_active",
+      "priority": 80,
+      "description": "Aktivera wind-modul vid vindstyrka över 6 m/s (måttlig vind)"
+    }
+  },
+  "_comment_legacy": "=== LEGACY MODULE CONFIG (bakåtkompatibilitet) ===",
+  "modules": {
+    "main_weather": {
+      "enabled": true,
+      "position": "hero",
+      "size": {
+        "width": 480,
+        "height": 300
+      },
+      "coords": {
+        "x": 40,
+        "y": 40
+      },
+      "data_sources": [
+        "netatmo",
+        "smhi",
+        "smhi_observations"
+      ]
+    },
+    "barometer_module": {
+      "enabled": true,
+      "position": "medium_1",
+      "size": {
+        "width": 240,
+        "height": 200
+      },
+      "coords": {
+        "x": 540,
+        "y": 40
+      },
+      "data_sources": [
+        "netatmo"
+      ],
+      "switchable_with": "sun_module"
+    },
+    "wind_module": {
+      "enabled": false,
+      "position": "medium_1",
+      "size": {
+        "width": 240,
+        "height": 200
+      },
+      "coords": {
+        "x": 540,
+        "y": 40
+      },
+      "data_sources": [
+        "smhi"
+      ],
+      "description": "Vindstyrka och vindriktning med svenska benämningar"
+    },
+    "tomorrow_forecast": {
+      "enabled": true,
+      "position": "medium_2",
+      "size": {
+        "width": 240,
+        "height": 200
+      },
+      "coords": {
+        "x": 540,
+        "y": 260
+      },
+      "data_sources": [
+        "smhi"
+      ]
+    },
+    "clock_module": {
+      "enabled": true,
+      "position": "small_1",
+      "size": {
+        "width": 240,
+        "height": 100
+      },
+      "coords": {
+        "x": 40,
+        "y": 360
+      },
+      "data_sources": [
+        "local"
+      ]
+    },
+    "status_module": {
+      "enabled": true,
+      "position": "small_2",
+      "size": {
+        "width": 240,
+        "height": 100
+      },
+      "coords": {
+        "x": 280,
+        "y": 360
+      },
+      "data_sources": [
+        "local"
+      ]
+    },
+    "_comment_new_modules": "=== NYA MODULER (Dynamic Module System) ===",
+    "precipitation_module": {
+      "enabled": true,
+      "position": "dynamic_bottom",
+      "size": {
+        "width": 480,
+        "height": 100
+      },
+      "coords": {
+        "x": 40,
+        "y": 360
+      },
+      "data_sources": [
+        "smhi",
+        "smhi_observations",
+        "cycling_weather"
+      ],
+      "description": "Nederbörd-information med cykel-väder varningar - NU MED OBSERVATIONS från Observatorielunden!"
+    },
+    "_future_sun_module": {
+      "_disabled": true,
+      "enabled": true,
+      "position": "dynamic_side",
+      "size": {
+        "width": 240,
+        "height": 200
+      },
+      "coords": {
+        "x": 540,
+        "y": 40
+      },
+      "data_sources": [
+        "sun_calculator"
+      ],
+      "description": "Detaljerad sol-information för säsongsanpassad layout"
+    }
+  },
+  "update_intervals": {
+    "netatmo_seconds": 600,
+    "smhi_seconds": 1800,
+    "smhi_observations_seconds": 900,
+    "display_seconds": 300,
+    "clock_seconds": 60,
+    "_comment_observations": "SMHI observations uppdateras varje 15 min (data kommer varje timme från Observatorielunden)"
+  },
+  "display": {
+    "type": "waveshare_4in26",
+    "rotation": 0,
+    "invert_colors": false,
+    "font_path": "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+    "font_scale": 1.0
+  },
+  "fonts": {
+    "hero_temp": 72,
+    "hero_desc": 32,
+    "medium_main": 48,
+    "medium_desc": 24,
+    "small_main": 32,
+    "small_desc": 18,
+    "tiny": 14
+  },
+  "_comment_user_preferences": "=== FRAMTIDA USER PREFERENCES ===",
+  "user_preferences": {
+    "module_preference": "normal",
+    "_comment": "normal, sun_focus, barometer_focus, cycling_focus"
+  },
+  "_comment_debug_test": "=== SÄKER TEST-DATA SYSTEM ===",
+  "debug": {
+    "enabled": true,
+    "log_level": "INFO",
+    "save_images": false,
+    "test_mode": false,
+    "allow_test_data": true,
+    "test_timeout_hours": 1,
+    "_comment_test_safety": "allow_test_data måste vara true för test-data injection. Sätt till false i produktion!",
+    "_comment_test_timeout": "Test-data rensas automatiskt efter 1 timme för säkerhet"
+  },
+  "_documentation": {
+    "_setup_instructions": {
+      "step_1": "Kopiera denna fil till config.json",
+      "step_2": "Ersätt placeholder-värden i api_keys.netatmo med dina riktiga credentials",
+      "step_3": "Justera location koordinater för din plats",
+      "step_4": "Anpassa stockholm_stations om du inte är i Stockholm",
+      "step_5": "Sätt debug.allow_test_data = false i produktion för säkerhet"
+    },
+    "smhi_observations": {
+      "description": "SMHI observations API för exakt 'regnar just nu'-logik från Observatorielunden",
+      "api_endpoint": "https://opendata-download-metobs.smhi.se/api/version/latest/parameter/7/station/98230/period/latest-hour/data.json",
+      "parameter_7": "Nederbördsmängd, summa 1 timme, 1 gång/tim, enhet: millimeter",
+      "station_98230": "Stockholm-Observatoriekullen A (Observatorielunden)",
+      "data_priority": "Netatmo Rain Gauge > SMHI observations (Observatorielunden) > SMHI prognoser för precipitation-värde",
+      "cache_time": "15 minuter (data uppdateras varje hel timme)",
+      "fallback_logic": "Om Netatmo saknas → Observatorielunden → Arlanda → använd prognosdata från befintlig SMHI-logik",
+      "quality_codes": "G=Godkänt, Y=Preliminärt, R=Dåligt"
+    },
+    "netatmo_setup": {
+      "description": "Hur du får Netatmo credentials",
+      "steps": [
+        "1. Gå till https://dev.netatmo.com",
+        "2. Logga in med ditt Netatmo-konto",
+        "3. Skapa en ny app i 'My Apps'",
+        "4. Kopiera Client ID och Client Secret",
+        "5. Generera refresh token via OAuth2 flow",
+        "6. Ersätt placeholder-värdena i config.json"
+      ],
+      "note": "Refresh token är långlivad och behöver sällan förnyas"
+    },
+    "precipitation_filtering": {
+      "description": "PCAT-baserad filtrering för att undvika snö-triggning",
+      "netatmo_priority": "Netatmo Rain Gauge detekterar INTE snö → alltid säkert att använda",
+      "smhi_filtering": "SMHI Observations/Forecast filtreras på pcat (nederbörd-typ)",
+      "allowed_pcat": {
+        "3": "Regn - aktiverar modul",
+        "5": "Hagel + regn - aktiverar modul"
+      },
+      "blocked_pcat": {
+        "0": "Ingen nederbörd",
+        "1": "Snö - blockeras",
+        "2": "Snöblandat regn - blockeras",
+        "4": "Hagel - blockeras",
+        "6": "Hagel + snö - blockeras"
+      }
+    },
+    "dynamic_module_system": {
+      "version": "2.0 - Fas 2 + SMHI Observations + PCAT-filtrering",
+      "description": "Trigger-baserat system för villkorsbaserade moduler MED exakta observationer från Observatorielunden OCH snö-filtrering",
+      "key_features": [
+        "Module groups som kan aktiveras/avaktiveras",
+        "Trigger conditions med säker evaluation",
+        "Priority-baserad konfliktlösning (Precipitation=100)",
+        "Bakåtkompatibilitet med legacy config",
+        "Extensible för framtida moduler",
+        "FIXAD: SMHI observations för exakt 'regnar just nu'-logik från station 98230",
+        "NYTT: PCAT-filtrering för att undvika snö-triggning vid SMHI-fallback"
+      ],
+      "example_workflow": [
+        "1. Netatmo Rain Gauge visar 2mm/h → precipitation_trigger aktiveras (ingen pcat-koll)",
+        "2. Netatmo Rain Gauge saknas, SMHI observations visar 2mm/h regn (pcat=3) → precipitation_trigger aktiveras",
+        "3. Netatmo Rain Gauge saknas, SMHI observations visar 2mm/h snö (pcat=1) → precipitation_trigger aktiveras INTE",
+        "4. bottom_section byts från 'normal' till 'precipitation_active' endast vid regn",
+        "5. E-Paper uppdateras med EXAKT nederbörd-varning baserat på Netatmo eller observations-data"
+      ]
+    },
+    "trigger_priority": {
+      "precipitation_trigger": 100,
+      "wind_trigger": 80,
+      "_comment": "Högre priority = aktiveras först vid konflikter. NU MED FUNGERANDE OBSERVATIONS-DATA från 98230 + PCAT-FILTRERING!"
+    },
+    "test_data_system": {
+      "description": "Säker test-data injection för precipitation module testing",
+      "safety_features": [
+        "Kräver debug.enabled = true OCH debug.allow_test_data = true",
+        "Automatisk timeout efter konfigurerad tid (default 1h)",
+        "Explicit enabled-check i test-data filen",
+        "Auto-cleanup vid timeout",
+        "Production-safe design (ignorerar test-data om debug disabled)"
+      ],
+      "usage": [
+        "1. Sätt debug.allow_test_data = true i config",
+        "2. Använd test_precipitation_trigger.py för att injicera test-data",
+        "3. Restart daemon för att ladda test-data",
+        "4. Observera layout-växling och rendering",
+        "5. Rensa test-data via script för normal drift"
+      ],
+      "production_safety": "Sätt debug.enabled = false OCH debug.allow_test_data = false i produktion!"
+    },
+    "future_expansions": {
+      "seasonal_layouts": "Sommar/vinter moduler (datum-baserade triggers)",
+      "user_overrides": "Manuella modulval via user_preferences",
+      "time_based": "Dag/natt-anpassade layouter",
+      "extreme_weather": "Specialmoduler för extremväder",
+      "example_triggers": {
+        "summer_trigger": {
+          "condition": "time_month >= 6 AND time_month <= 8",
+          "target_section": "side_panel",
+          "activate_group": "summer_focus",
+          "priority": 50,
+          "description": "Sommar-layout med UV-fokus"
+        },
+        "user_preference_trigger": {
+          "condition": "user_preference == sun_focus",
+          "target_section": "side_panel",
+          "activate_group": "user_preference",
+          "priority": 60,
+          "description": "Användarvald sol-modul istället för barometer"
+        }
+      }
+    },
+    "trigger_syntax": {
+      "operators": "> < >= <= == != AND OR",
+      "functions": "precipitation, forecast_precipitation_2h, temperature, wind_speed, time_hour, time_month, precipitation_source, pcat",
+      "examples": [
+        "precipitation > 0 AND pcat == 3  <- Endast regn",
+        "precipitation_source == 'netatmo_rain_gauge'  <- Netatmo alltid OK",
+        "forecast_precipitation_2h >= 0.2",
+        "wind_speed > 14",
+        "time_month >= 6 AND time_month <= 8"
+      ]
+    }
+  }
+}
