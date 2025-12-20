@@ -14,21 +14,7 @@ Thumbs.db
 
 # Miljö- och konfigfiler (tokens, API-nycklar m.m.)
 config.json
-.env
-*.env
-
-# Backup- och temporära filer
-*.bak
-*.tmp
-*.swp
-~$*
-
-# JSON-data som inte är kod (cache, historik, mätdata)
-pressure_history.json
-sun_cache.json
-
-# Virtuella miljöer
-.venv/
+...
 env/
 venv/
 
@@ -41,5 +27,10 @@ node_modules/
 *.exe
 *.o
 *.a
+
 # Ignore local changes in the e-Paper submodule
 /e-Paper
+
+# Backup-mappar (överallt i projektet)
+backup/
+

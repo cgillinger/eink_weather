@@ -1,0 +1,86 @@
+{
+  "59.3293_18.0686_2025-07-28": {
+    "data": {
+      "sunrise": "2025-07-28T04:23:00",
+      "sunset": "2025-07-28T21:24:00",
+      "daylight_duration": "17h 1m",
+      "source": "ipgeolocation.io",
+      "cached": false,
+      "api_raw": {
+        "location": {
+          "latitude": "59.32930",
+          "longitude": "18.06860",
+          "country_name": "",
+          "state_prov": "Stockholm County",
+          "city": "Stockholm",
+          "locality": "",
+          "elevation": "13"
+        },
+        "date": "2025-07-28",
+        "current_time": "16:38:20.011",
+        "sunrise": "04:23",
+        "sunset": "21:24",
+        "sun_status": "-",
+        "solar_noon": "12:54",
+        "day_length": "17:00",
+        "sun_altitude": 33.18933894017728,
+        "sun_distance": 151931858.71621194,
+        "sun_azimuth": 249.68731773749857,
+        "moon_phase": "WAXING_CRESCENT",
+        "moonrise": "09:07",
+        "moonset": "22:11",
+        "moon_status": "-",
+        "moon_altitude": 32.8387582123341,
+        "moon_distance": 393554.5282966327,
+        "moon_azimuth": 193.64804345159698,
+        "moon_parallactic_angle": 6.921539426577704,
+        "moon_illumination_percentage": "15.52",
+        "moon_angle": 46.40556678766334
+      }
+    },
+    "cached_at": "2025-07-28T16:38:20.039208",
+    "cache_hours": 24
+  },
+  "59.3293_18.0686_2025-11-22": {
+    "data": {
+      "sunrise": "2025-11-22T07:57:00",
+      "sunset": "2025-11-22T15:10:00",
+      "daylight_duration": "7h 13m",
+      "source": "ipgeolocation.io",
+      "cached": false,
+      "api_raw": {
+        "location": {
+          "latitude": "59.32930",
+          "longitude": "18.06860",
+          "country_name": "Sweden",
+          "state_prov": "Stockholm County",
+          "city": "Stockholm",
+          "locality": "",
+          "elevation": "13"
+        },
+        "date": "2025-11-22",
+        "current_time": "21:14:40.060",
+        "sunrise": "07:57",
+        "sunset": "15:10",
+        "sun_status": "-",
+        "solar_noon": "11:33",
+        "day_length": "07:12",
+        "sun_altitude": -43.72622338384475,
+        "sun_distance": 147787447.4524559,
+        "sun_azimuth": 312.1497016452598,
+        "moon_phase": "WAXING_CRESCENT",
+        "moonrise": "11:32",
+        "moonset": "15:00",
+        "moon_status": "-",
+        "moon_altitude": -36.82863686608736,
+        "moon_distance": 403788.5490706108,
+        "moon_azimuth": 275.85630160897415,
+        "moon_parallactic_angle": 35.1880937480323,
+        "moon_illumination_percentage": "5.81",
+        "moon_angle": 27.905501627057948
+      }
+    },
+    "cached_at": "2025-11-22T21:14:40.092766",
+    "cache_hours": 24
+  }
+}
