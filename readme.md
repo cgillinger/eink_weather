@@ -6,6 +6,8 @@
 
 A weather station with E-Paper display that combines local Netatmo sensors with SMHI weather data, SMHI Observations, and precise sun times. The system uses a dynamic module system with trigger-based modules, high-quality Weather Icons, and an intelligent rendering pipeline.
 
+> This is a personal hobby project I build for my own use and publish in case it's useful to someone else. I work on it in my spare time, so issues and PRs are welcome but replies may be slow. Use at your own risk.
+
 ### Key Features
 
 - **Dynamic Module System**: Modules activate automatically based on weather conditions
